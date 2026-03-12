@@ -1,9 +1,9 @@
 const fs = require("fs")
 const path = require("path")
 
-const API="https://newsapi.org/v2/top-headlines?country=id&pageSize=12&apiKey=9f8af9f4b277493c842c02e16441214f"
+const API = "https://newsapi.org/v2/top-headlines?country=id&pageSize=10&apiKey=9f8af9f4b277493c842c02e16441214f"
 
-const articleDir=path.join(__dirname,"../articles")
+const articleDir = path.join(__dirname,"../articles")
 
 if(!fs.existsSync(articleDir)){
 fs.mkdirSync(articleDir)
@@ -16,46 +16,24 @@ return text
 .replace(/ +/g,"-")
 }
 
-function rewrite(text){
-
-if(!text) return ""
-
-return text
-.replace(/menurut/gi,"berdasarkan informasi")
-.replace(/mengatakan/gi,"menjelaskan")
-.replace(/laporan/gi,"informasi")
-.replace(/terjadi/gi,"berlangsung")
-}
-
 function randomImage(){
 
-const imgs=[
-"https://picsum.photos/800/500?random=1",
-"https://picsum.photos/800/500?random=2",
-"https://picsum.photos/800/500?random=3",
-"https://picsum.photos/800/500?random=4",
-"https://picsum.photos/800/500?random=5",
-"https://picsum.photos/800/500?random=6",
-"https://picsum.photos/800/500?random=7",
-"https://picsum.photos/800/500?random=8"
-]
+const id=Math.floor(Math.random()*1000)
 
-return imgs[Math.floor(Math.random()*imgs.length)]
+return `https://picsum.photos/800/500?random=${id}`
+
 }
 
-function template(title,content,img,source){
+function createArticle(title,content,img,source){
 
 return `
 <!DOCTYPE html>
-<html lang="id">
+<html>
 
 <head>
 
 <meta charset="UTF-8">
-
-<title>${title} | Tasik News</title>
-
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${title}</title>
 
 <style>
 
@@ -72,14 +50,9 @@ background:white;
 padding:20px;
 }
 
-h1{
-font-size:28px;
-}
-
 img{
 width:100%;
 border-radius:6px;
-margin-bottom:20px;
 }
 
 .source{
@@ -108,29 +81,59 @@ Sumber: ${source}
 </div>
 
 </body>
+
 </html>
 `
 }
 
 async function generate(){
 
-const res=await fetch(API)
-const data=await res.json()
+let articles=[]
+
+try{
+
+const res = await fetch(API)
+const data = await res.json()
+
+articles = data.articles || []
+
+}catch(err){
+
+console.log("API gagal, gunakan fallback")
+
+articles = [
+
+{
+title:"Berita Teknologi Terbaru",
+description:"Perkembangan teknologi terbaru menjadi perhatian banyak pihak di seluruh dunia.",
+source:{name:"Tasik News"}
+},
+
+{
+title:"Ekonomi Global Mengalami Perubahan",
+description:"Situasi ekonomi global mengalami dinamika baru yang menarik perhatian para analis.",
+source:{name:"Tasik News"}
+}
+
+]
+
+}
 
 let list=[]
 
-for(const art of data.articles){
+for(const art of articles){
 
-const title=rewrite(art.title)
-const content=rewrite(art.description||art.content||"")
+const title = art.title || "Berita terbaru"
+const content = art.description || "Informasi berita terbaru dari berbagai sumber terpercaya."
+const source = art.source?.name || "Internet"
 
-const slug=slugify(title)
+const slug = slugify(title)
 
-const img=randomImage()
+const img = randomImage()
 
-const file=slug+".html"
+const file = slug+".html"
 
-const html=template(title,content,img,art.source.name)
+const html = createArticle(title,content,img,source)
 
 fs.writeFileSync(
 path.join(articleDir,file),
@@ -138,19 +141,23 @@ html
 )
 
 list.push({
+
 title:title,
 file:"articles/"+file,
 img:img
+
 })
 
 }
 
 fs.writeFileSync(
+
 path.join(__dirname,"../news.json"),
 JSON.stringify(list,null,2)
+
 )
 
-console.log("News generated:",list.length)
+console.log("Artikel dibuat:",list.length)
 
 }
 
