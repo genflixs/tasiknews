@@ -1,109 +1,151 @@
 const fs = require("fs")
-const fetch = require("node-fetch")
+const path = require("path")
 
-const APIKEY = "9f8af9f4b277493c842c02e16441214f"
-const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
-const API =
-`https://newsapi.org/v2/top-headlines?country=id&pageSize=30&apiKey=${APIKEY}`
+const API = "https://newsapi.org/v2/top-headlines?country=id&pageSize=10&apiKey=9f8af9f4b277493c842c02e16441214f"
 
-const IMAGE =
-"https://picsum.photos/900/500?random="
+const articleDir = path.join(__dirname,"../articles")
 
-async function generate(){
+if(!fs.existsSync(articleDir)){
+fs.mkdirSync(articleDir)
+}
 
-const res = await fetch(API)
-
-const data = await res.json()
-
-let posts = []
-
-for(let i=0;i<data.articles.length;i++){
-
-let a=data.articles[i]
-
-let slug=a.title
+function slugify(text){
+return text
 .toLowerCase()
-.replace(/[^a-z0-9]/g,"-")
-.slice(0,80)
+.replace(/[^\w ]+/g,"")
+.replace(/ +/g,"-")
+}
 
-let image=IMAGE+i
+function rewrite(text){
+if(!text) return ""
 
-let article =
+return text
+.replace("menurut","berdasarkan")
+.replace("mengatakan","menjelaskan")
+.replace("laporan","informasi")
+.replace("terjadi","berlangsung")
+}
 
-`Berita terbaru mengenai ${a.title}.
+function randomImage(){
 
-Informasi ini disusun kembali agar lebih mudah dipahami pembaca.
+const imgs=[
+"https://picsum.photos/800/500?random=1",
+"https://picsum.photos/800/500?random=2",
+"https://picsum.photos/800/500?random=3",
+"https://picsum.photos/800/500?random=4",
+"https://picsum.photos/800/500?random=5",
+"https://picsum.photos/800/500?random=6",
+"https://picsum.photos/800/500?random=7",
+"https://picsum.photos/800/500?random=8"
+]
 
-${a.description}
+return imgs[Math.floor(Math.random()*imgs.length)]
+}
 
-Perkembangan informasi masih terus berlangsung sehingga masyarakat disarankan mengikuti update terbaru dari media terpercaya.`
+function template(title,content,img,source){
 
-let html =
-
-`
-<html>
+return `
+<!DOCTYPE html>
+<html lang="id">
 
 <head>
+<meta charset="UTF-8">
+<title>${title} | Tasik News</title>
 
-<title>${a.title} | Tasik News</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
-<meta name="description" content="${a.description}">
+<style>
 
-<script type="application/ld+json">
-{
-"@context":"https://schema.org",
-"@type":"NewsArticle",
-"headline":"${a.title}",
-"publisher":{
-"name":"Tasik News"
+body{
+font-family:Arial;
+background:#f5f5f5;
+margin:0;
+padding:0;
 }
+
+.container{
+max-width:900px;
+margin:auto;
+background:white;
+padding:20px;
 }
-</script>
+
+h1{
+font-size:28px;
+}
+
+img{
+width:100%;
+border-radius:6px;
+}
+
+.source{
+margin-top:30px;
+color:#666;
+font-size:14px;
+}
+
+</style>
 
 </head>
 
 <body>
 
-<h1>${a.title}</h1>
+<div class="container">
 
-<img src="${image}">
+<h1>${title}</h1>
 
-<p>${article}</p>
+<img src="${img}">
 
-<p>
-Sumber:
-<a href="${a.url}">
-${a.source.name}
-</a>
-</p>
+<p>${content}</p>
+
+<div class="source">
+Sumber: ${source}
+</div>
+
+</div>
 
 </body>
-
 </html>
 `
+}
 
-fs.writeFileSync(`articles/${slug}.html`,html)
+async function generate(){
 
-posts.push({
+const res = await fetch(API)
+const data = await res.json()
 
-title:a.title,
+let list=[]
 
-slug:slug,
+for(const art of data.articles){
 
-image:image,
+const title = rewrite(art.title)
+const content = rewrite(art.description || art.content || "")
+const slug = slugify(title)
 
-desc:a.description
+const img = randomImage()
 
+const file = slug+".html"
+
+const html = template(title,content,img,art.source.name)
+
+fs.writeFileSync(path.join(articleDir,file),html)
+
+list.push({
+title:title,
+file:"articles/"+file,
+img:img
 })
 
 }
 
 fs.writeFileSync(
-"articles/index.json",
-JSON.stringify(posts,null,2)
+path.join(__dirname,"../news.json"),
+JSON.stringify(list,null,2)
 )
 
-}
+console.log("News generated:",list.length)
 
+}
 
 generate()
