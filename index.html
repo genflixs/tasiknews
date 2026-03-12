@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta charset="UTF-8">
+
+<title>Tasik News</title>
+
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+
+<header>
+
+<h1>Tasik News</h1>
+
+<div id="google_translate_element"></div>
+
+</header>
+
+<div id="news"></div>
+
+<script>
+
+fetch("articles/index.json")
+
+.then(r=>r.json())
+
+.then(data=>{
+
+let html=""
+
+data.forEach(post=>{
+
+html+=`
+
+<div class="card">
+
+<img src="${post.image}">
+
+<h2>${post.title}</h2>
+
+<p>${post.desc}</p>
+
+<a href="articles/${post.slug}.html">
+Baca Artikel
+</a>
+
+</div>
+
+`
+
+})
+
+document.getElementById("news").innerHTML=html
+
+})
+
+</script>
+
+<script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
+<script>
+
+function googleTranslateElementInit(){
+
+new google.translate.TranslateElement(
+{pageLanguage:'id'},
+'google_translate_element')
+
+}
+
+</script>
+
+</body>
+</html>
