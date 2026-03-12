@@ -1,34 +1,35 @@
 name: TasikNewsAuto
 
 on:
- schedule:
-  - cron: "0 */2 * * *"
+  workflow_dispatch:
+  schedule:
+    - cron: "0 */2 * * *"
 
 jobs:
 
- build:
+  build:
 
-  runs-on: ubuntu-latest
+    runs-on: ubuntu-latest
 
-  steps:
+    steps:
 
-  - name: Checkout Repository
-    uses: actions/checkout@v3
+    - name: Checkout Repository
+      uses: actions/checkout@v3
 
-  - name: Setup NodeJS
-    uses: actions/setup-node@v3
+    - name: Setup NodeJS
+      uses: actions/setup-node@v3
 
-  - name: Install Dependencies
-    run: npm install node-fetch
+    - name: Install Dependencies
+      run: npm install node-fetch
 
-  - name: Generate News Articles
-    run: node generator/generate-news.js
+    - name: Generate News
+      run: node generator/generate-news.js
 
-  - name: Commit Update
-    run: |
-      git config --global user.name "newsbot"
-      git config --global user.email "bot@github.com"
+    - name: Commit Update
+      run: |
+        git config --global user.name "newsbot"
+        git config --global user.email "bot@github.com"
 
-      git add .
-      git commit -m "auto news update"
-      git push
+        git add .
+        git commit -m "auto news update"
+        git push
