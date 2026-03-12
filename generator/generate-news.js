@@ -2,7 +2,7 @@ const fs = require("fs")
 const fetch = require("node-fetch")
 
 const APIKEY = "9f8af9f4b277493c842c02e16441214f"
-
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 const API =
 `https://newsapi.org/v2/top-headlines?country=id&pageSize=30&apiKey=${APIKEY}`
 
@@ -104,5 +104,6 @@ JSON.stringify(posts,null,2)
 )
 
 }
+
 
 generate()
